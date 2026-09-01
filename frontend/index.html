@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PriorAuthAI — Case Review Console</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #F5F6F1;
+    --paper-raised: #FFFFFF;
+    --ink: #1C2624;
+    --ink-soft: #4A5450;
+    --teal: #16403D;
+    --teal-deep: #0E2E2B;
+    --teal-light: #EBF3F2;
+    --sage: #2D6A4F;
+    --sage-wash: #E8F3ED;
+    --amber: #B8791F;
+    --amber-wash: #FBF4E8;
+    --rose: #9E2A2B;
+    --rose-wash: #FBECEE;
+    --line: #DBDED4;
+    --line-strong: #BFC4B8;
+    --focus: #2D6E68;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .topbar {
+    background: var(--teal-deep);
+    color: #EDEFE9;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .topbar .wordmark {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .topbar .wordmark .dot {
+    color: #7FAE9E;
+  }
+
+  .topbar .tagline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #A9BDB6;
+  }
+
+  .provider-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.12);
+    color: #D2E3DC;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  .card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+  }
+
+  .card-header h2 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin: 0;
+    color: var(--teal-deep);
+  }
+
+  .card-step {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    background: #EEF0EA;
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+
+  .selector-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .selector-row label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .selector-row select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    padding: 7px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    background: #FAFBF8;
+    color: var(--ink);
+    cursor: pointer;
+    min-width: 200px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  .meta-grid dt {
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .meta-grid dd {
+    margin: 0;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .history-box {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: #FAFBF8;
+    border: 1px dashed var(--line);
+    border-radius: 3px;
+    font-size: 0.82rem;
+  }
+
+  .history-box .title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .history-item {
+    margin: 3px 0;
+    color: var(--ink);
+  }
+
+  /* =========================
+     PATIENT ASSISTANT CHAT
+     ========================= */
+
+  .chat-card {
+    padding-bottom: 18px;
+  }
+
+  .chat-header-description {
+    margin: -4px 0 16px;
+    color: var(--ink-soft);
+    font-size: 0.86rem;
+  }
+
+  .chat-patient-context {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    background: var(--teal-light);
+    border: 1px solid #C9DDDA;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    color: var(--teal);
+  }
+
+  .chat-patient-context .context-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .chat-patient-context .context-value {
+    font-weight: 600;
+  }
+
+  .chat-messages {
+    min-height: 120px;
+    max-height: 340px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+    padding: 12px;
+    background: #FAFBF8;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .chat-empty {
+    min-height: 95px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    padding: 20px;
+  }
+
+  .chat-message {
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    max-width: 82%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .chat-message:last-child {
+    margin-bottom: 0;
+  }
+
+  .chat-message.user {
+    margin-left: auto;
+    background: var(--teal);
+    color: #F4F7F4;
+    border-bottom-right-radius: 3px;
+  }
+
+  .chat-message.assistant {
+    margin-right: auto;
+    background: #FFFFFF;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 3px;
+  }
+
+  .chat-message.error {
+    background: var(--rose-wash);
+    color: var(--rose);
+    border: 1px solid #E8B4B8;
+  }
+
+  .chat-message.thinking {
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .chat-input-row input {
+    flex: 1;
+    min-width: 0;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 11px 13px;
+    border: 1px solid var(--line-strong);
+    border-radius: 3px;
+    background: #FFFFFF;
+    color: var(--ink);
+  }
+
+  .chat-input-row input::placeholder {
+    color: #8A938E;
+  }
+
+  .chat-input-row input:disabled {
+    background: #F2F4F0;
+    cursor: not-allowed;
+  }
+
+  .chat-send-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    background: var(--teal);
+    color: #F4F7F4;
+    border: none;
+    border-radius: 3px;
+    padding: 10px 20px;
+    cursor: pointer;
+    min-width: 72px;
+  }
+
+  .chat-send-btn:hover {
+    background: var(--teal-deep);
+  }
+
+  .chat-send-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .chat-hint {
+    margin: 8px 2px 0;
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.67rem;
+  }
+
+  /* Checklist */
+
+  .summary-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .ring-wrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex: none;
+  }
+
+  .ring-wrap svg {
+    transform: rotate(-90deg);
+  }
+
+  .ring-track {
+    stroke: var(--line);
+  }
+
+  .ring-progress {
+    stroke: var(--sage);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+  }
+
+  .ring-progress.incomplete {
+    stroke: var(--amber);
+  }
+
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .summary-text .count-line {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .summary-text .missing-line {
+    color: var(--amber);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .summary-text .missing-line.none {
+    color: var(--sage);
+  }
+
+  .checklist {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--paper-raised);
+  }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .check-row:last-child {
+    border-bottom: none;
+  }
+
+  .check-row:nth-child(even) {
+    background: #FAFBF8;
+  }
+
+  .check-index {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    width: 18px;
+    flex: none;
+  }
+
+  .check-label {
+    flex: 1;
+    font-size: 0.92rem;
+  }
+
+  .stamp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+    flex: none;
+  }
+
+  .stamp.received {
+    color: var(--sage);
+    border: 1px solid var(--sage);
+    background: var(--sage-wash);
+  }
+
+  .stamp.missing {
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    background: var(--amber-wash);
+  }
+
+  .toggle-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: #FFFFFF;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    padding: 4px 9px;
+    cursor: pointer;
+    flex: none;
+  }
+
+  .toggle-btn:hover {
+    border-color: var(--teal);
+    color: var(--teal);
+  }
+
+  .banner {
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .banner.warn {
+    background: var(--amber-wash);
+    color: #7A5111;
+    border: 1px solid #E5CCA0;
+  }
+
+  .banner.ok {
+    background: var(--sage-wash);
+    color: #1B4D3E;
+    border: 1px solid #B8D8C7;
+  }
+
+  .banner.err {
+    background: var(--rose-wash);
+    color: var(--rose);
+    border: 1px solid #E8B4B8;
+  }
+
+  .banner .mark {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+  }
+
+  /* Run button */
+
+  .action-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 22px 0 28px;
+  }
+
+  .run-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--teal);
+    color: #F4F7F4;
+    border: none;
+    border-radius: 3px;
+    padding: 13px 26px;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 5px rgba(22,64,61,0.25);
+    transition: background 0.15s ease;
+  }
+
+  .run-btn:hover {
+    background: var(--teal-deep);
+  }
+
+  .run-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .status-hint {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  /* Results Console */
+
+  .review-result {
+    border: 2px solid var(--teal);
+    border-radius: 4px;
+    background: var(--paper-raised);
+    padding: 24px;
+    margin-top: 10px;
+  }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1.5px solid var(--line);
+    margin-bottom: 16px;
+  }
+
+  .review-header h3 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin: 0;
+    color: var(--teal-deep);
+  }
+
+  .decision-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 3px;
+  }
+
+  .decision-badge.incomplete {
+    background: var(--amber-wash);
+    color: #7A5111;
+    border: 1.5px solid var(--amber);
+  }
+
+  .decision-badge.ready {
+    background: var(--sage-wash);
+    color: #1B4D3E;
+    border: 1.5px solid var(--sage);
+  }
+
+  .decision-badge.manual {
+    background: #EAECEF;
+    color: #334155;
+    border: 1.5px solid #94A3B8;
+  }
+
+  .next-action-card {
+    background: #FAFBF8;
+    border: 1.5px solid var(--line-strong);
+    border-left: 5px solid var(--teal);
+    border-radius: 3px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+  }
+
+  .next-action-card .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 3px;
+  }
+
+  .next-action-card .text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    font-weight: 700;
+    margin: 18px 0 8px;
+  }
+
+  .evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .evidence-card {
+    background: #FAFBF8;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+
+  .evidence-card .card-lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .evidence-card .card-val {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .evidence-tag {
+    display: inline-block;
+    background: #E8EDE9;
+    color: #233D35;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-size: 0.78rem;
+    margin: 2px 3px 2px 0;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .req-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .req-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.88rem;
+  }
+
+  .req-item:last-child {
+    border-bottom: none;
+  }
+
+  .req-item .req-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    width: 20px;
+    text-align: center;
+  }
+
+  .req-item.satisfied .req-icon {
+    color: var(--sage);
+  }
+
+  .req-item.unsatisfied .req-icon {
+    color: var(--amber);
+  }
+
+  .req-item .req-title {
+    font-weight: 600;
+    min-width: 200px;
+  }
+
+  .req-item .req-desc {
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+  }
+
+  .review-note {
+    background: #FAFBF8;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px 16px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--ink);
+    white-space: pre-line;
+  }
+
+  /* Mobile */
+
+  @media (max-width: 650px) {
+    main {
+      padding: 18px 12px 60px;
+    }
+
+    .card {
+      padding: 16px;
+    }
+
+    .selector-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .selector-row select {
+      width: 100%;
+    }
+
+    .chat-message {
+      max-width: 92%;
+    }
+
+    .chat-input-row {
+      flex-direction: column;
+    }
+
+    .chat-send-btn {
+      width: 100%;
+    }
+
+    .check-row {
+      flex-wrap: wrap;
+    }
+
+    .check-label {
+      min-width: calc(100% - 35px);
+    }
+
+    .stamp {
+      margin-left: 30px;
+    }
+
+    .toggle-btn {
+      margin-left: auto;
+    }
+
+    .req-item {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .req-item .req-title {
+      min-width: 0;
+    }
+
+    .req-item .req-desc {
+      width: 100%;
+      margin-left: 32px;
+    }
+
+    .action-bar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="wordmark">PriorAuth<span class="dot">AI</span></div>
+  <div class="tagline">Prior Authorization Review Console</div>
+  <div class="provider-badge" id="providerBadge">LLM: Initializing…</div>
+</div>
+
+<main>
+
+  <!-- STEP 1: PATIENT & REQUEST -->
+  <section class="card">
+    <div class="card-header">
+      <h2>Patient &amp; Authorization Request</h2>
+      <span class="card-step">Step 1 • Profile &amp; Service</span>
+    </div>
+
+    <div class="selector-row">
+      <label for="patientSelect">Select Patient:</label>
+      <select id="patientSelect"></select>
+    </div>
+
+   
+
+    <div class="history-box" id="historyBox" style="display:none;">
+      <div class="title">Authorization History Records</div>
+      <div id="historyList"></div>
+    </div>
+  </section>
+
+
+  <!-- PATIENT ASSISTANT -->
+  <section class="card chat-card" id="chatSection">
+
+    <div class="card-header">
+      <h2>Patient Assistant</h2>
+      <span class="card-step">Patient Context • AI Assistant</span>
+    </div>
+
+    <p class="chat-header-description">
+      Ask questions about the currently selected patient's diagnosis,
+      insurance, procedure, authorization history, or clinical evidence.
+    </p>
+
+    <div class="chat-patient-context">
+      <span class="context-label">Current Patient</span>
+      <span class="context-value" id="chatPatientContext">P001</span>
+    </div>
+
+    <div id="chatMessages" class="chat-messages">
+      <div class="chat-empty" id="chatEmpty">
+        Ask a question about this patient's record to begin.
+      </div>
+    </div>
+
+    <div class="chat-input-row">
+      <input
+        type="text"
+        id="chatInput"
+        placeholder="Ask about this patient's diagnosis, insurance, procedure, or history..."
+        autocomplete="off"
+        maxlength="2000"
+      />
+
+      <button
+        id="chatSendBtn"
+        class="chat-send-btn"
+        type="button"
+      >
+        Ask
+      </button>
+    </div>
+
+    <div class="chat-hint">
+      Press Enter to send • Responses are based on the selected patient
+    </div>
+
+  </section>
+
+
+  <!-- STEP 2: INSURANCE REQUIREMENTS -->
+  <section class="card">
+    <div class="card-header">
+      <h2>Insurance Authorization Policy</h2>
+      <span class="card-step">Step 2 • Guidelines</span>
+    </div>
+
+    <dl class="meta-grid">
+      <div>
+        <dt>Payer Rule Status</dt>
+        <dd id="insRuleStatus">—</dd>
+      </div>
+
+      <div>
+        <dt>Prior Auth Required</dt>
+        <dd id="insRequiresAuth">—</dd>
+      </div>
+
+      <div>
+        <dt>Historical Denial Rate</dt>
+        <dd id="insDenialRate">—</dd>
+      </div>
+
+      <div>
+        <dt>Payer Required Docs</dt>
+        <dd id="insReqDocs">Standard 6-document checklist</dd>
+      </div>
+    </dl>
+  </section>
+
+
+  <!-- STEP 3: DOCUMENT CHECKLIST -->
+  <section class="card">
+    <div class="card-header">
+      <h2>Document Checklist &amp; Evidence Status</h2>
+      <span class="card-step">Step 3 • Documentation</span>
+    </div>
+
+    <p style="font-size:0.86rem; color:var(--ink-soft); margin:0 0 14px;">
+      Toggle documents on file for this patient to simulate document availability.
+    </p>
+
+    <div class="summary-row">
+
+      <div class="ring-wrap">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle
+            class="ring-track"
+            cx="28"
+            cy="28"
+            r="24"
+            fill="none"
+            stroke-width="5"
+          />
+
+          <circle
+            id="ringProgress"
+            class="ring-progress"
+            cx="28"
+            cy="28"
+            r="24"
+            fill="none"
+            stroke-width="5"
+            stroke-dasharray="150.8"
+            stroke-dashoffset="0"
+          />
+        </svg>
+
+        <div class="ring-label" id="ringLabel">4/6</div>
+      </div>
+
+      <div class="summary-text">
+        <div class="count-line" id="countLine">
+          4 / 6 documents received
+        </div>
+
+        <div class="missing-line" id="missingLine">
+          2 documents missing
+        </div>
+      </div>
+
+    </div>
+
+    <ul class="checklist" id="checklist"></ul>
+
+    <div id="bannerSlot"></div>
+  </section>
+
+
+  <!-- ACTION: RUN WORKFLOW -->
+  <div class="action-bar">
+
+    <button
+      type="button"
+      class="run-btn"
+      id="runBtn"
+    >
+      RUN PRIOR AUTH WORKFLOW
+    </button>
+
+    <span
+      class="status-hint"
+      id="runHint"
+    >
+      Ready to execute LangGraph workflow
+    </span>
+
+  </div>
+
+
+  <!-- STEP 4: CONSOLIDATED REVIEW RESULTS -->
+  <section
+    id="workflowResult"
+    class="review-result"
+    style="display:none;"
+  >
+
+    <div class="review-header">
+
+      <div>
+        <p style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:0.72rem;
+          text-transform:uppercase;
+          color:var(--ink-soft);
+          margin:0 0 2px;
+        ">
+          LangGraph Workflow Review
+        </p>
+
+        <h3 id="resultTitle">
+          Prior Authorization Review
+        </h3>
+      </div>
+
+      <div
+        id="resultBadge"
+        class="decision-badge incomplete"
+      >
+        INCOMPLETE_DOCUMENTATION
+      </div>
+
+    </div>
+
+
+    <!-- NEXT ACTION -->
+    <div class="next-action-card">
+
+      <div class="label">
+        Next Action
+      </div>
+
+      <div
+        class="text"
+        id="resultNextAction"
+      >
+        —
+      </div>
+
+    </div>
+
+
+    <!-- CLINICAL EVIDENCE ANALYSIS -->
+    <div class="section-title">
+      Clinical Evidence Analysis
+    </div>
+
+    <div class="evidence-grid">
+
+      <div class="evidence-card">
+        <div class="card-lbl">
+          Conditions &amp; Diagnoses
+        </div>
+
+        <div
+          class="card-val"
+          id="evConditions"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="evidence-card">
+        <div class="card-lbl">
+          Requested Procedure
+        </div>
+
+        <div
+          class="card-val"
+          id="evProcedures"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="evidence-card">
+        <div class="card-lbl">
+          Clinical Findings &amp; Notes
+        </div>
+
+        <div
+          class="card-val"
+          id="evFindings"
+        >
+          —
+        </div>
+      </div>
+
+
+      <div class="evidence-card">
+        <div class="card-lbl">
+          Supporting Evidence
+        </div>
+
+        <div
+          class="card-val"
+          id="evSupporting"
+        >
+          —
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- REQUIREMENTS EVALUATION -->
+    <div class="section-title">
+      Insurance Policy &amp; Requirement Evaluation
+    </div>
+
+    <ul
+      class="req-list"
+      id="reqList"
+    ></ul>
+
+
+    <!-- AI-GENERATED REVIEW NOTE -->
+    <div class="section-title">
+      AI-Generated Review Note
+    </div>
+
+    <div
+      class="review-note"
+      id="resultExplanation"
+    >
+      —
+    </div>
+
+  </section>
+
+</main>
+
+
+<script>
+
+  /* =========================================================
+     DOCUMENT CONFIGURATION
+     ========================================================= */
+
+  const DOCUMENT_LABELS = {
+    clinical_note: "Clinical / Physician Note",
+    diagnosis_evidence: "Diagnosis Evidence",
+    lab_report: "Lab Report",
+    imaging_report: "Imaging / Radiology Report",
+    medication_history: "Medication History",
+    physician_order: "Physician Order / Prescription"
+  };
+
+
+  let documentState = {
+    clinical_note: true,
+    diagnosis_evidence: true,
+    lab_report: true,
+    imaging_report: false,
+    medication_history: true,
+    physician_order: false
+  };
+
+
+  let currentPatientId = "P001";
+
+  const CIRCUMFERENCE = 2 * Math.PI * 24;
+
+
+  /* =========================================================
+     HEALTH / LLM STATUS
+     ========================================================= */
+
+  async function loadHealth() {
+
+    try {
+
+      const res = await fetch('/api/health');
+
+      const data = await res.json();
+
+      const badge =
+        document.getElementById('providerBadge');
+
+      if (data.llm_provider === 'gemini') {
+
+        badge.textContent =
+          `LLM: Gemini (${data.llm_model || 'gemini-3.6-flash'})`;
+
+      } else {
+
+        badge.textContent =
+          'LLM: Mock Mode';
+      }
+
+    } catch (e) {
+
+      document.getElementById('providerBadge').textContent =
+        'LLM: Standalone';
+
+    }
+  }
+
+
+  /* =========================================================
+     LOAD PATIENTS
+     ========================================================= */
+
+  async function loadPatients() {
+
+    try {
+
+      const res = await fetch('/api/patients');
+
+      const data = await res.json();
+
+      const sel =
+        document.getElementById('patientSelect');
+
+      sel.innerHTML = '';
+
+      (data.patients || []).forEach(p => {
+
+        const opt =
+          document.createElement('option');
+
+        opt.value = p.patient_id;
+
+        opt.textContent =
+          `${p.patient_id} — ${p.requested_procedure_code || 'Procedure'} (${p.diagnosis_code || 'Diagnosis'})`;
+
+        if (p.patient_id === 'P001') {
+          opt.selected = true;
+        }
+
+        sel.appendChild(opt);
+
+      });
+
+      currentPatientId =
+        sel.value || 'P001';
+
+      updateChatPatientContext();
+
+      await loadPatientData(currentPatientId);
+
+    } catch (e) {
+
+      console.error(
+        "Failed loading patients list",
+        e
+      );
+
+    }
+  }
+
+
+  /* =========================================================
+     UPDATE CHAT PATIENT CONTEXT
+     ========================================================= */
+
+  function updateChatPatientContext() {
+
+    const context =
+      document.getElementById('chatPatientContext');
+
+    if (context) {
+      context.textContent =
+        currentPatientId || 'No patient selected';
+    }
+  }
+
+
+  /* =========================================================
+     LOAD PATIENT DATA
+     ========================================================= */
+
+  async function loadPatientData(patientId) {
+
+    try {
+
+      const res =
+        await fetch(`/api/patient/${patientId}`);
+
+      if (!res.ok) {
+        return;
+      }
+
+      const data =
+        await res.json();
+
+      const p =
+        data.patient || {};
+
+      const ins =
+        data.insurance || {};
+
+
+      
+      /* History */
+
+      const histBox =
+        document.getElementById('historyBox');
+
+      const histList =
+        document.getElementById('historyList');
+
+
+      if (data.history && data.history.length > 0) {
+
+        histBox.style.display = 'block';
+
+        histList.innerHTML =
+          data.history
+            .slice(0, 3)
+            .map(h => `
+              <div class="history-item">
+                • <strong>${h.request_date || ''}</strong>:
+                ${h.service_description || h.service_code || ''}
+                (${h.approval_status || 'status'})
+                — <em>${h.notes || 'No notes'}</em>
+              </div>
+            `)
+            .join('');
+
+      } else {
+
+        histBox.style.display = 'none';
+
+        histList.innerHTML = '';
+      }
+
+
+      /* Insurance */
+
+      document.getElementById('insRuleStatus').textContent =
+        ins.rule_found
+          ? 'Active Policy on File'
+          : 'No Policy on File';
+
+
+      document.getElementById('insRequiresAuth').textContent =
+        ins.requires_prior_auth
+          ? 'Yes (Prior Auth Mandated)'
+          : 'No Prior Auth Required';
+
+
+      document.getElementById('insDenialRate').textContent =
+        typeof ins.historical_denial_rate === 'number'
+          ? (ins.historical_denial_rate * 100).toFixed(0) + '%'
+          : '0%';
+
+
+      document.getElementById('insReqDocs').textContent =
+        (
+          ins.required_documents &&
+          ins.required_documents.length
+        )
+          ? ins.required_documents.join(', ')
+          : 'Standard 6-document checklist';
+
+
+    } catch (e) {
+
+      console.error(
+        "Failed loading patient details",
+        e
+      );
+
+    }
+  }
+
+
+  /* =========================================================
+     CHAT HELPERS
+     ========================================================= */
+
+  function scrollChatToBottom() {
+
+    const messages =
+      document.getElementById('chatMessages');
+
+    messages.scrollTop =
+      messages.scrollHeight;
+  }
+
+
+  function addChatMessage(
+    text,
+    type = 'assistant',
+    extraClass = ''
+  ) {
+
+    const messages =
+      document.getElementById('chatMessages');
+
+    const empty =
+      document.getElementById('chatEmpty');
+
+    if (empty) {
+      empty.remove();
+    }
+
+    const message =
+      document.createElement('div');
+
+    message.className =
+      `chat-message ${type} ${extraClass}`.trim();
+
+    message.textContent = text;
+
+    messages.appendChild(message);
+
+    scrollChatToBottom();
+
+    return message;
+  }
+
+
+  /* =========================================================
+     SEND PATIENT CHAT MESSAGE
+     ========================================================= */
+
+  async function sendChatMessage() {
+
+    const input =
+      document.getElementById('chatInput');
+
+    const btn =
+      document.getElementById('chatSendBtn');
+
+
+    const message =
+      input.value.trim();
+
+
+    /* Do not send empty messages */
+
+    if (!message) {
+      return;
+    }
+
+
+    /* Require selected patient */
+
+    if (!currentPatientId) {
+
+      addChatMessage(
+        'Please select a patient before asking a question.',
+        'assistant',
+        'error'
+      );
+
+      return;
+    }
+
+
+    /* Show user message */
+
+    addChatMessage(
+      message,
+      'user'
+    );
+
+
+    /* Clear input */
+
+    input.value = '';
+
+
+    /* Disable controls */
+
+    input.disabled = true;
+    btn.disabled = true;
+
+
+    /* Show thinking message */
+
+    const thinkingMessage =
+      addChatMessage(
+        'Thinking…',
+        'assistant',
+        'thinking'
+      );
+
+
+    try {
+
+      const response =
+        await fetch('/api/chat', {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json'
+          },
+
+          body: JSON.stringify({
+            patient_id: currentPatientId,
+            message: message
+          })
+        });
+
+
+      /*
+       * Try to parse JSON.
+       * If backend returns HTML/plain text,
+       * don't crash the chat UI.
+       */
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        data = {};
+      }
+
+
+      /* HTTP error */
+
+      if (!response.ok) {
+
+        thinkingMessage.classList.remove('thinking');
+        thinkingMessage.classList.add('error');
+
+        thinkingMessage.textContent =
+          data.error ||
+          `Unable to get a response from the server (${response.status}).`;
+
+        return;
+      }
+
+
+      /* Successful response */
+
+      thinkingMessage.classList.remove('thinking');
+
+      thinkingMessage.textContent =
+        data.answer ||
+        data.response ||
+        data.message ||
+        'No answer returned by the assistant.';
+
+
+    } catch (err) {
+
+      console.error(
+        'Patient Assistant error:',
+        err
+      );
+
+
+      thinkingMessage.classList.remove('thinking');
+      thinkingMessage.classList.add('error');
+
+      thinkingMessage.textContent =
+        'Could not connect to the backend. Please make sure the server is running.';
+
+    } finally {
+
+      /* Re-enable controls */
+
+      btn.disabled = false;
+      input.disabled = false;
+
+      input.focus();
+
+      scrollChatToBottom();
+    }
+  }
+
+
+  /* =========================================================
+     CLEAR CHAT WHEN PATIENT CHANGES
+     ========================================================= */
+
+  function resetChatForPatient() {
+
+    const messages =
+      document.getElementById('chatMessages');
+
+    messages.innerHTML = `
+      <div class="chat-empty" id="chatEmpty">
+        Ask a question about this patient's record to begin.
+      </div>
+    `;
+
+    const input =
+      document.getElementById('chatInput');
+
+    input.value = '';
+    input.disabled = false;
+
+    const btn =
+      document.getElementById('chatSendBtn');
+
+    btn.disabled = false;
+
+    updateChatPatientContext();
+  }
+
+
+  /* =========================================================
+     DOCUMENT CHECKLIST
+     ========================================================= */
+
+  function renderChecklist() {
+
+    const keys =
+      Object.keys(DOCUMENT_LABELS);
+
+    const receivedCount =
+      keys.filter(
+        k => documentState[k]
+      ).length;
+
+    const missingCount =
+      keys.length - receivedCount;
+
+
+    const list =
+      document.getElementById('checklist');
+
+    list.innerHTML = '';
+
+
+    keys.forEach((key, i) => {
+
+      const received =
+        documentState[key];
+
+      const li =
+        document.createElement('li');
+
+      li.className =
+        'check-row';
+
+
+      li.innerHTML = `
+        <span class="check-index">
+          ${String(i + 1).padStart(2, '0')}
+        </span>
+
+        <span class="check-label">
+          ${received ? '✓' : '✗'}
+          ${DOCUMENT_LABELS[key]}
+        </span>
+
+        <span class="stamp ${received ? 'received' : 'missing'}">
+          ${received ? '✓ Received' : '✗ Missing'}
+        </span>
+
+        <button
+          type="button"
+          class="toggle-btn"
+          data-key="${key}"
+        >
+          ${received ? 'Mark Missing' : 'Mark Received'}
+        </button>
+      `;
+
+
+      list.appendChild(li);
+
+    });
+
+
+    list
+      .querySelectorAll('.toggle-btn')
+      .forEach(btn => {
+
+        btn.addEventListener(
+          'click',
+          () => {
+
+            const key =
+              btn.getAttribute('data-key');
+
+            documentState[key] =
+              !documentState[key];
+
+            renderChecklist();
+          }
+        );
+
+      });
+
+
+    document.getElementById('countLine').textContent =
+      `${receivedCount} / ${keys.length} documents received`;
+
+
+    const missingLineEl =
+      document.getElementById('missingLine');
+
+
+    if (missingCount === 0) {
+
+      missingLineEl.textContent =
+        'All 6 required documents on file';
+
+      missingLineEl.classList.add('none');
+
+    } else {
+
+      missingLineEl.textContent =
+        `${missingCount} document${missingCount > 1 ? 's' : ''} missing`;
+
+      missingLineEl.classList.remove('none');
+    }
+
+
+    const ring =
+      document.getElementById('ringProgress');
+
+    const fraction =
+      receivedCount / keys.length;
+
+
+    ring.setAttribute(
+      'stroke-dasharray',
+      CIRCUMFERENCE.toFixed(1)
+    );
+
+    ring.setAttribute(
+      'stroke-dashoffset',
+      (
+        CIRCUMFERENCE *
+        (1 - fraction)
+      ).toFixed(1)
+    );
+
+
+    ring.classList.toggle(
+      'incomplete',
+      missingCount > 0
+    );
+
+
+    document.getElementById('ringLabel').textContent =
+      `${receivedCount}/${keys.length}`;
+
+
+    const bannerSlot =
+      document.getElementById('bannerSlot');
+
+
+    if (missingCount === 0) {
+
+      bannerSlot.innerHTML = `
+        <div class="banner ok">
+          <span class="mark">✓</span>
+
+          <span>
+            Required documentation complete —
+            ready for authorization review.
+          </span>
+        </div>
+      `;
+
+    } else {
+
+      bannerSlot.innerHTML = `
+        <div class="banner warn">
+          <span class="mark">✗</span>
+
+          <span>
+            Authorization cannot proceed —
+            required documentation is incomplete.
+          </span>
+        </div>
+      `;
+    }
+  }
+
+
+  /* =========================================================
+     RUN PRIOR AUTH WORKFLOW
+     ========================================================= */
+
+  async function runWorkflow() {
+
+    const btn =
+      document.getElementById('runBtn');
+
+    const hint =
+      document.getElementById('runHint');
+
+    const resultSection =
+      document.getElementById('workflowResult');
+
+
+    btn.disabled = true;
+
+    hint.textContent =
+      'Executing LangGraph workflow with Gemini clinical evidence extraction…';
+
+
+    try {
+
+      const response =
+        await fetch('/api/run-workflow', {
+
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json'
+          },
+
+          body: JSON.stringify({
+
+            patient_id:
+              currentPatientId,
+
+            document_status:
+              { ...documentState }
+
+          })
+
+        });
+
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+
+      if (!response.ok) {
+
+        resultSection.style.display =
+          'block';
+
+
+        document.getElementById(
+          'resultTitle'
+        ).textContent =
+          `Workflow Error (${response.status})`;
+
+
+        const badge =
+          document.getElementById(
+            'resultBadge'
+          );
+
+
+        badge.className =
+          'decision-badge incomplete';
+
+        badge.textContent =
+          'ERROR';
+
+
+        document.getElementById(
+          'resultNextAction'
+        ).textContent =
+          data.error ||
+          'Server error occurred during workflow execution.';
+
+
+        document.getElementById(
+          'resultExplanation'
+        ).textContent =
+          'Workflow execution failed. Review server logs.';
+
+
+        hint.textContent =
+          'Workflow execution failed.';
+
+        return;
+      }
+
+
+      resultSection.style.display =
+        'block';
+
+
+      /* Title & Badge */
+
+      const status =
+        data.status ||
+        data.decision ||
+        'UNKNOWN';
+
+
+      document.getElementById(
+        'resultTitle'
+      ).textContent =
+        `Prior Authorization Review — ${currentPatientId}`;
+
+
+      const badge =
+        document.getElementById(
+          'resultBadge'
+        );
+
+
+      badge.textContent =
+        status;
+
+
+      if (status === 'READY_FOR_REVIEW') {
+
+        badge.className =
+          'decision-badge ready';
+
+      } else if (
+        status === 'INCOMPLETE_DOCUMENTATION'
+      ) {
+
+        badge.className =
+          'decision-badge incomplete';
+
+      } else {
+
+        badge.className =
+          'decision-badge manual';
+      }
+
+
+      /* Next Action */
+
+      document.getElementById(
+        'resultNextAction'
+      ).textContent =
+        data.next_action ||
+        'Review documentation and proceed accordingly.';
+
+
+      /* Clinical Evidence */
+
+      const ev =
+        data.clinical_evidence || {};
+
+
+      const renderTags =
+        (items, fallback) => {
+
+          if (!items || !items.length) {
+
+            return `
+              <span style="
+                color:var(--ink-soft);
+                font-size:0.82rem;
+              ">
+                ${fallback || 'None documented'}
+              </span>
+            `;
+          }
+
+
+          return items
+            .map(
+              it =>
+                `<span class="evidence-tag">${it}</span>`
+            )
+            .join('');
+        };
+
+
+      document.getElementById(
+        'evConditions'
+      ).innerHTML =
+        renderTags(
+          ev.conditions,
+          'No specific condition extracted'
+        );
+
+
+      document.getElementById(
+        'evProcedures'
+      ).innerHTML =
+        renderTags(
+          ev.procedures,
+          'No procedure extracted'
+        );
+
+
+      document.getElementById(
+        'evFindings'
+      ).innerHTML =
+        renderTags(
+          ev.findings,
+          'No prior history findings'
+        );
+
+
+      document.getElementById(
+        'evSupporting'
+      ).innerHTML =
+        renderTags(
+          ev.evidence,
+          'Standard record fields verified'
+        );
+
+
+      /* Requirements list */
+
+      const reqList =
+        document.getElementById(
+          'reqList'
+        );
+
+
+      reqList.innerHTML = '';
+
+
+      const reqItems =
+        (
+          data.requirements &&
+          data.requirements.checklist
+        ) || [];
+
+
+      reqItems.forEach(r => {
+
+        const li =
+          document.createElement('li');
+
+        li.className =
+          `req-item ${
+            r.satisfied
+              ? 'satisfied'
+              : 'unsatisfied'
+          }`;
+
+
+        li.innerHTML = `
+
+          <span class="req-icon">
+            ${r.satisfied ? '✓' : '✗'}
+          </span>
+
+          <span class="req-title">
+            ${r.title}
+          </span>
+
+          <span class="req-desc">
+            ${r.description}
+          </span>
+
+        `;
+
+
+        reqList.appendChild(li);
+
+      });
+
+
+      /* AI Review Note */
+
+      document.getElementById(
+        'resultExplanation'
+      ).textContent =
+        data.explanation ||
+        'No explanation generated.';
+
+
+      hint.textContent =
+        `Completed (${
+          data.llm_provider
+            ? data.llm_provider.toUpperCase()
+            : 'LIVE'
+        }).`;
+
+
+      resultSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+
+
+    } catch (err) {
+
+      resultSection.style.display =
+        'block';
+
+
+      document.getElementById(
+        'resultTitle'
+      ).textContent =
+        'Connection Error';
+
+
+      document.getElementById(
+        'resultNextAction'
+      ).textContent =
+        'Ensure Flask server is running and try again.';
+
+
+      document.getElementById(
+        'resultExplanation'
+      ).textContent =
+        err.message ||
+        'Could not connect to backend.';
+
+
+      hint.textContent =
+        'Connection error.';
+
+    } finally {
+
+      btn.disabled = false;
+    }
+  }
+
+
+  /* =========================================================
+     EVENT LISTENERS
+     ========================================================= */
+
+  document
+    .getElementById('patientSelect')
+    .addEventListener(
+      'change',
+      async (e) => {
+
+        currentPatientId =
+          e.target.value;
+
+        updateChatPatientContext();
+
+        resetChatForPatient();
+
+        await loadPatientData(
+          currentPatientId
+        );
+      }
+    );
+
+
+  document
+    .getElementById('runBtn')
+    .addEventListener(
+      'click',
+      runWorkflow
+    );
+
+
+  /* Patient Assistant Send Button */
+
+  document
+    .getElementById('chatSendBtn')
+    .addEventListener(
+      'click',
+      sendChatMessage
+    );
+
+
+  /* Patient Assistant Enter Key */
+
+  document
+    .getElementById('chatInput')
+    .addEventListener(
+      'keydown',
+      (event) => {
+
+        if (event.key === 'Enter') {
+
+          event.preventDefault();
+
+          sendChatMessage();
+        }
+      }
+    );
+
+
+  /* =========================================================
+     INITIALIZE
+     ========================================================= */
+
+  loadHealth();
+
+  loadPatients();
+
+  renderChecklist();
+
+</script>
+
+</body>
+</html>
