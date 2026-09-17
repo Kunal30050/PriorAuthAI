@@ -1,5 +1,6 @@
 import asyncio
 import json
+import threading
 import time
 from typing import Any
 
@@ -11,8 +12,9 @@ try:
 except ImportError:
     from agent.tracing import log_event
 
+import sys
 SERVER_PARAMS = StdioServerParameters(
-    command=r".venv\Scripts\python.exe",
+    command=sys.executable,
     args=["-m", "agent.mcp_tools.server"],
 )
 
@@ -27,6 +29,43 @@ TOOL_SCHEMAS = {
     "check_documents": {"patient_id": str, "required_documents": list},
     "check_document_status": {"document_status": dict, "required_documents": list},
 }
+
+
+# In-memory record of tool calls made per workflow_id, used only to
+# detect redundant repeat calls within one workflow run. This avoids
+# re-reading and re-parsing the entire (ever-growing) trace log from
+# disk on every single tool call, which got slower over time as
+# logs/traces.jsonl grew. Cleared lazily -- entries older than a few
+# minutes are dropped so this dict can't grow unbounded across a
+# long-running server process.
+_recent_calls_lock = threading.Lock()
+_recent_calls: dict[str, set[str]] = {}
+_recent_calls_seen_at: dict[str, float] = {}
+_RECENT_CALLS_TTL_SECONDS = 600
+
+
+def _prune_recent_calls() -> None:
+    cutoff = time.time() - _RECENT_CALLS_TTL_SECONDS
+    stale = [
+        wid
+        for wid, seen_at in _recent_calls_seen_at.items()
+        if seen_at < cutoff
+    ]
+    for wid in stale:
+        _recent_calls.pop(wid, None)
+        _recent_calls_seen_at.pop(wid, None)
+
+
+def _check_and_record_call(workflow_id: str, signature: str) -> bool:
+    """Returns True if this exact (tool, arguments) signature was already
+    called earlier in this workflow_id. O(1) in-memory, no disk I/O."""
+    with _recent_calls_lock:
+        _prune_recent_calls()
+        calls = _recent_calls.setdefault(workflow_id, set())
+        _recent_calls_seen_at[workflow_id] = time.time()
+        was_seen = signature in calls
+        calls.add(signature)
+        return was_seen
 
 
 def _validate_args(tool_name: str, arguments: dict) -> tuple[bool, list[str]]:
@@ -129,21 +168,13 @@ def call_mcp_tool_sync(
         raise
     finally:
         try:
-            # Detect repeated identical calls inside one workflow from the raw
-            # trace history. This is intentionally best-effort and read-only.
+            # Detect repeated identical calls inside one workflow. Uses an
+            # in-memory record (see _check_and_record_call) instead of
+            # re-reading the whole trace log from disk on every call.
             redundant = False
-            try:
-                from tracing import read_events
-            except ImportError:
-                from agent.tracing import read_events
             if wid != "untagged":
                 signature = json.dumps([tool_name, arguments], sort_keys=True, default=str)
-                for prior in read_events():
-                    if prior.get("workflow_id") == wid and prior.get("event_type") == "tool_call":
-                        prior_sig = json.dumps([prior.get("tool_name"), prior.get("tool_arguments")], sort_keys=True, default=str)
-                        if prior_sig == signature:
-                            redundant = True
-                            break
+                redundant = _check_and_record_call(wid, signature)
             retrieval_failure = _retrieval_failure(
                 tool_name,
                 parsed if error is None else None,

@@ -3,3 +3,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Runtime / generated files
+logs/
+traces.jsonl
+
+# Local backups
+agent/workflow_graph.py.pre_telemetry_backup

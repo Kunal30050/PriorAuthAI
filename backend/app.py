@@ -17,7 +17,14 @@ from chat_agent import chat_with_patient
 from document_check import CHECKLIST_DOCUMENT_KEYS
 from insurance_requirements import InsuranceRequirementsModule
 from patient_info import PatientInfoModule, PatientNotFoundError
-from workflow_graph import run_workflow
+from agent.workflow_graph import run_workflow
+
+try:
+    from tracing import log_event, read_events
+    from metrics import compute_all_metrics
+except ImportError:
+    from agent.tracing import log_event, read_events
+    from agent.metrics import compute_all_metrics
 
 FRONTEND_DIR = ROOT / "frontend"
 
@@ -149,6 +156,10 @@ def api_run_workflow():
             "patient": result.get("patient"),
             "insurance": result.get("insurance"),
             "llm_provider": result.get("llm_provider"),
+            # so the frontend can tag a later /api/feedback call to this
+            # exact run
+            "conversation_id": result.get("conversation_id"),
+            "workflow_id": result.get("workflow_id"),
         }
     )
 @app.route("/api/chat", methods=["POST", "OPTIONS"])
@@ -189,6 +200,55 @@ def api_chat():
             "error": f"Chat failed: {str(exc)}",
             "status": "CHAT_ERROR",
         }), 500
+
+@app.route("/api/feedback", methods=["POST", "OPTIONS"])
+def api_feedback():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    if not request.is_json:
+        return _client_error("Request body must be JSON.", 400)
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _client_error("Request body must be a JSON object.", 400)
+
+    conversation_id = payload.get("conversation_id")
+    workflow_id = payload.get("workflow_id")
+    feedback = payload.get("feedback")
+
+    if feedback not in ("up", "down"):
+        return _client_error("feedback must be 'up' or 'down'.", 400)
+
+    if not conversation_id or not workflow_id:
+        return _client_error("conversation_id and workflow_id are required.", 400)
+
+    log_event(
+        conversation_id=conversation_id,
+        workflow_id=workflow_id,
+        step_name="user_feedback",
+        event_type="user_feedback",
+        user_feedback=feedback,
+        payload={"comment": payload.get("comment")},
+    )
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/metrics", methods=["GET"])
+def api_metrics():
+    """Serves the same numbers scripts/compute_metrics.py prints -- both
+    read agent/metrics.py, so the dashboard and the CLI can never drift
+    out of sync with each other."""
+    events = list(read_events())
+    if not events:
+        return jsonify({"summary": {}, "trend": {"days": []}, "eval": {}, "generated_at": None})
+    return jsonify(compute_all_metrics(events))
+
+
+@app.route("/dashboard")
+def dashboard():
+    return send_from_directory(FRONTEND_DIR, "dashboard.html")
+
 
 def main():
     port = int(os.getenv("PORT", "5000"))
