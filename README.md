@@ -3,8 +3,7 @@
 Building this in locked phases. Each phase is finished and reviewed before
 the next one starts.
 
-## Phases
-1. **Requirements & Data Design** ✅ (this phase)
+1. Requirements & Data Design
 2. Patient Info Module
 3. Insurance Requirements Module
 4. Document Check Module
